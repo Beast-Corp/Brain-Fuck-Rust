@@ -8,3 +8,4 @@ A minimal brainfuck compiler written in rust.
     - main.rs
     - interpreter.rs
     - parser.rs
+    - error.rs

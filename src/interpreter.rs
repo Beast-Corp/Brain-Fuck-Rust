@@ -7,6 +7,8 @@ const MEMORY_SIZE: usize = 30000;
 pub struct Interpreter {
     memory: [u8; MEMORY_SIZE],
     pointer: usize,
+    line: usize,
+    column: usize,
 }
 
 impl Interpreter {
@@ -14,6 +16,8 @@ impl Interpreter {
         Self {
             memory: [0; MEMORY_SIZE],
             pointer: 0,
+            line: 1,
+            column: 1,
         }
     }
 
@@ -32,12 +36,18 @@ impl Interpreter {
                 Instruction::MoveRight => {
                     self.pointer += 1;
                     if self.pointer >= MEMORY_SIZE {
-                        return Err(BrainfuckError::PointerOutOfBounds);
+                        return Err(BrainfuckError::PointerOutOfBounds {
+                            line: self.line,
+                            column: self.column,
+                        });
                     }
                 }
                 Instruction::MoveLeft => {
                     if self.pointer == 0 {
-                        return Err(BrainfuckError::PointerOutOfBounds);
+                        return Err(BrainfuckError::PointerOutOfBounds {
+                            line: self.line,
+                            column: self.column,
+                        });
                     }
                     self.pointer -= 1;
                 }
@@ -56,7 +66,10 @@ impl Interpreter {
                         while depth > 0 {
                             pc += 1;
                             if pc >= instructions.len() {
-                                return Err(BrainfuckError::UnmatchedBracket(pc));
+                                return Err(BrainfuckError::UnmatchedBracket {
+                                    line: self.line,
+                                    column: self.column,
+                                });
                             }
                             match instructions[pc] {
                                 Instruction::LoopStart => depth += 1,
@@ -70,13 +83,17 @@ impl Interpreter {
                 }
                 Instruction::LoopEnd => {
                     if self.memory[self.pointer] != 0 {
-                        pc = loop_stack.last().copied().ok_or(BrainfuckError::UnmatchedBracket(pc))?;
+                        pc = loop_stack.last().copied().ok_or(BrainfuckError::UnmatchedBracket {
+                            line: self.line,
+                            column: self.column,
+                        })?;
                     } else {
                         loop_stack.pop();
                     }
                 }
             }
             pc += 1;
+            self.column += 1;
         }
 
         Ok(())

@@ -15,8 +15,11 @@ pub enum Instruction {
 pub fn parse(code: &str) -> Result<Vec<Instruction>, BrainfuckError> {
     let mut instructions = Vec::new();
     let mut bracket_stack = Vec::new();
+    let mut line = 1;
+    let mut column = 0;
 
     for (pos, ch) in code.chars().enumerate() {
+        column += 1;
         match ch {
             '+' => instructions.push(Instruction::Increment),
             '-' => instructions.push(Instruction::Decrement),
@@ -26,20 +29,27 @@ pub fn parse(code: &str) -> Result<Vec<Instruction>, BrainfuckError> {
             ',' => instructions.push(Instruction::Input),
             '[' => {
                 instructions.push(Instruction::LoopStart);
-                bracket_stack.push(pos);
+                bracket_stack.push((line, column));
             }
             ']' => {
                 instructions.push(Instruction::LoopEnd);
                 if bracket_stack.pop().is_none() {
-                    return Err(BrainfuckError::UnmatchedBracket(pos));
+                    return Err(BrainfuckError::UnmatchedBracket { line, column });
                 }
+            }
+            '\n' => {
+                line += 1;
+                column = 0;
             }
             _ => {} // Ignore other characters
         }
     }
 
-    if !bracket_stack.is_empty() {
-        return Err(BrainfuckError::UnmatchedBracket(bracket_stack[0]));
+    if let Some((line, column)) = bracket_stack.first() {
+        return Err(BrainfuckError::UnmatchedBracket {
+            line: *line,
+            column: *column,
+        });
     }
 
     Ok(instructions)

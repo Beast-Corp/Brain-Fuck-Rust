@@ -18,7 +18,7 @@ pub fn parse(code: &str) -> Result<Vec<Instruction>, BrainfuckError> {
     let mut line = 1;
     let mut column = 0;
 
-    for (pos, ch) in code.chars().enumerate() {
+    for ch in code.chars() {
         column += 1;
         match ch {
             '+' => instructions.push(Instruction::Increment),
